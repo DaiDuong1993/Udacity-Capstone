@@ -217,7 +217,7 @@ workflows:
       - build-docker-app:
           requires: [test-frontend]
       - deploy-infrastructure:
-          requires: [test-frontend, build-docker-app]
+          requires: [build-docker-app]
           filters:
             branches:
               only: [master]
