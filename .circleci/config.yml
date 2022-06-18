@@ -69,7 +69,7 @@ jobs:
       - docker/build:
           image: udacity-capstone-image
           lint-dockerfile: true
-          tag: "udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}"
+          tag: "${CIRCLE_WORKFLOW_ID:0:7}"
       - docker/push:
           digest-path: yangnguyen1993/udacity-capstone-image
           image: udacity-capstone-image
