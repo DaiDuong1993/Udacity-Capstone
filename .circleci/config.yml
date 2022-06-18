@@ -43,7 +43,7 @@ jobs:
           keys: [frontend-build]
       - run:
           command: |
-            npm run test
+            npm test
 
   scan-frontend:
     docker:
@@ -60,7 +60,6 @@ jobs:
           command: |
             npm i
             npm audit fix --audit-level=critical --force
-            npm audit fix --force
             npm audit --audit-level=critical
   build-docker-app:
     docker:
