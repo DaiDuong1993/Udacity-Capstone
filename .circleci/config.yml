@@ -16,7 +16,7 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: circleci/node:16.15.1
+      - image: circleci/node:16.15.0
     steps:
       - checkout
       - run:
@@ -30,7 +30,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:16.15.1
+      - image: circleci/node:16.15.0
     steps:
       - checkout
       - restore_cache:
@@ -41,7 +41,7 @@ jobs:
 
   scan-frontend:
     docker:
-      - image: circleci/node:16.15.1
+      - image: circleci/node:16.15.0
     steps:
       - checkout
       - restore_cache:
