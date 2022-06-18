@@ -72,7 +72,7 @@ jobs:
             docker build -t udacity-capstone-image:$TAG .
             DOCKERPATH=yangnguyen1993/udacity-capstone-image
             echo "Docker ID and Image: ${DOCKERPATH}"
-            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+            docker login -u "$DOCKER_USER" -p "$DOCKERHUB_PASSWORD"
             docker tag udacity-capstone-image ${DOCKERPATH}
             echo "Docker ID and Image push"
             docker push $DOCKERPATH
