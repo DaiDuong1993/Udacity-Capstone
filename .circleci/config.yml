@@ -69,12 +69,10 @@ jobs:
           name: build docker image
           command: |
             TAG=${CIRCLE_WORKFLOW_ID:0:7}
-            DOCKER_USER=${DOCKER_USER}
-            DOCKER_PASS=${DOCKERHUB_PASSWORD}
             docker build -t udacity-capstone-image:$TAG .
             DOCKERPATH=yangnguyen1993/udacity-capstone-image
             echo "Docker ID and Image: ${DOCKERPATH}"
-            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
             docker tag udacity-capstone-image ${DOCKERPATH}
             echo "Docker ID and Image push"
             docker push $DOCKERPATH
