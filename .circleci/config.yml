@@ -76,6 +76,7 @@ jobs:
       - docker/push:
           digest-path: /tmp/digest.txt
           image: udacity-capstone-image
+          tag: "${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           command: |
             echo "Digest is: $(</tmp/digest.txt)"
