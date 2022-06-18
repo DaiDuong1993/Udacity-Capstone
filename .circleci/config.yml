@@ -8,12 +8,8 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
-      - run:
-          name: Destroy environments
-          when: on_fail
-          command: |
-            aws s3 rb s3://udacapstone-${CIRCLE_WORKFLOW_ID:0:7} --force
-            aws cloudformation delete-stack --stack-name udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - aws-eks/delete-cluster:
+          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
             
 jobs:
   build-frontend:
@@ -81,93 +77,29 @@ jobs:
       - run:
           command: |
             echo "Digest is: $(</tmp/digest.txt)"
-      # - run:
-      #     name: Build Front End App
-      #     command: |
-      #       node -v
-      #       npm i
-      #       npm run build
-      # - run:
-      #     name: build docker image
-      #     command: |
-      #       TAG=${CIRCLE_WORKFLOW_ID:0:7}
-      #       docker build -t udacity-capstone-image:$TAG .
-      #       DOCKERPATH=yangnguyen1993/udacity-capstone-image
-      #       echo "Docker ID and Image: ${DOCKERPATH}"
-      #       docker login -u "$DOCKER_USER" -p "$DOCKERHUB_PASSWORD"
-      #       docker tag udacity-capstone-image ${DOCKERPATH}
-      #       echo "Docker ID and Image push"
-      #       docker push $DOCKERPATH
-
-  deploy-infrastructure:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            yum -y install tar
-            yum -y install gzip
-      - run:
-          name: Deploy frontend infrastructure
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --stack-name udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7} \
-              --tags project=udacity-project
-      - destroy-environment
-  
-  configure-infrastructure:
-    docker:
-      - image: cimg/node:16.15.1
-        auth:
-          username: $DOCKER_USER
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints: ["41:28:bb:dd:3e:2b:dd:a6:a7:49:ac:f1:c1:73:ce:e3"] # You can get this ID in the section where you registered the SSH Key
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            npm i aws-cli
-            sleep 5
-            aws --version
-      - run:
-          name: Configure server
-          command: |
-            EC2_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text)
-            echo "EC2_IP:${EC2_IP}"
-            ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP}
-            sleep 5
-            
-      - destroy-environment
 
   deploy-frontend:
     docker:
-      - image: cimg/node:16.15.1
-        user: root
+      - image: 'cimg/python:3.10'
+    parameters:
+      cluster-name:
+        description: |
+          EKS React App Cluster
+        type: string
     steps:
-      - checkout
+      - kubernetes/install:
+          kubectl-version: v1.22.0
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
       - run:
-          name: Install dependencies
+          name: Run cluster with docker image
           command: |
-            apt-get update
-            apt -y install awscli
-      - run:
-          name: Deploy frontend objects
-          command: |
-            npm install
-            npm run build
-            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz build
-            aws s3 cp build s3://udacapstone-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            kubectl get services
+            dockerpath=yangnguyen1993/udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}
+            echo "Docker ID and Image: $dockerpath"
+            kubectl run udacity-capstone-image --image=$dockerpath --port=3000
+            kubectl get pods
+            kubectl port-forward pods/udacity-capstone-image 3000:80
       - destroy-environment
 
   smoke-test:
@@ -235,13 +167,13 @@ workflows:
           requires: [build-frontend]
       - build-docker-app:
           requires: [test-frontend]
-      # - deploy-infrastructure:
-      #     requires: [build-docker-app]
-      #     filters:
-      #       branches:
-      #         only: [master]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - aws-eks/create-cluster:
+          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+          requires: [build-docker-app]
+      - deploy-frontend:
+          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+          requires:
+            - aws-eks/create-cluster
       # - deploy-frontend:
       #     requires: [deploy-infrastructure]
       # - smoke-test:
