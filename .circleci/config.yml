@@ -16,7 +16,10 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: circleci/node:16.15.0
+      - image: cimg/node:16.15.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - run:
@@ -30,7 +33,10 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:16.15.0
+      - image: cimg/node:16.15.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - restore_cache:
@@ -41,7 +47,10 @@ jobs:
 
   scan-frontend:
     docker:
-      - image: circleci/node:16.15.0
+      - image: cimg/node:16.15.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - restore_cache:
