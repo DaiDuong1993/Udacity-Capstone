@@ -69,10 +69,14 @@ jobs:
       - docker/build:
           image: udacity-capstone-image
           lint-dockerfile: true
+          registry: 'yangnguyen1993'
           tag: "${CIRCLE_WORKFLOW_ID:0:7}"
       - docker/push:
-          digest-path: yangnguyen1993/udacity-capstone-image
+          digest-path: /tmp/digest.txt
           image: udacity-capstone-image
+      - run:
+          command: |
+            echo "Digest is: $(</tmp/digest.txt)"
       # - run:
       #     name: Build Front End App
       #     command: |
