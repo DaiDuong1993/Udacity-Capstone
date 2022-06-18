@@ -46,23 +46,6 @@ jobs:
             npm i
             npm test
 
-  scan-frontend:
-    docker:
-      - image: cimg/node:16.15.1
-        auth:
-          username: $DOCKER_USER
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - restore_cache:
-          keys: [frontend-build]
-      - run:
-          name: Front end analyze
-          command: |
-            npm i
-            npm audit fix --audit-level=critical --force
-            npm audit fix --force
-            npm audit --audit-level=high
   build-docker-app:
     docker:
       - image: cimg/node:16.15.1
@@ -96,15 +79,12 @@ jobs:
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             echo "Docker ID and Image push"
             docker push DOCKERPATH
-      
 
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]
       - run:
           name: Install dependencies
           command: |
@@ -118,6 +98,38 @@ jobs:
               --stack-name udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7} \
               --tags project=udacity-project
+      - destroy-environment
+  
+  configure-infrastructure:
+    docker:
+      docker:
+      - image: cimg/node:16.15.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKERHUB_PASSWORD
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["41:28:bb:dd:3e:2b:dd:a6:a7:49:ac:f1:c1:73:ce:e3"] # You can get this ID in the section where you registered the SSH Key
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            npm i aws-cli
+            sleep 5
+            aws --version
+      - run:
+          name: Configure server
+          command: |
+            EC2_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text)
+            echo "EC2_IP:${EC2_IP}"
+            ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP}
+            sleep 5
+            
       - destroy-environment
 
   deploy-frontend:
@@ -167,39 +179,6 @@ jobs:
             fi
       - destroy-environment
 
-  cloudfront-update:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            yum -y install tar gzip
-      - run:
-          name: Retrieve stack workflow id
-          command: |
-            export OldWorkFlowID=$(aws cloudformation list-exports \
-              --query "Exports[?Name==\`WorkflowID\`].Value" \
-              --no-paginate \
-              --output text)
-            echo $OldWorkFlowID >> ~/OldWorkflowID.txt
-            cat ~/OldWorkflowID.txt
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            aws cloudformation deploy \
-            --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack \
-            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-            --tags project=udacapstone
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - OldWorkflowID.txt
-      # Here's where you will add some code to rollback on failure
-      - destroy-environment
-
   cleanup:
     docker:
       - image: amazon/aws-cli
@@ -236,13 +215,15 @@ workflows:
       - build-frontend
       - test-frontend:
           requires: [build-frontend]
-      - scan-frontend:
-          requires: [build-frontend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, scan-frontend]
-      #     filters:
-      #       branches:
-      #         only: [master]
+      - build-docker-app:
+          requires: [test-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, build-docker-app]
+          filters:
+            branches:
+              only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - deploy-frontend:
       #     requires: [deploy-infrastructure]
       # - smoke-test:

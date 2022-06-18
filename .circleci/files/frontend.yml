@@ -1,5 +1,5 @@
 Description: >
-  UdaPeople frontend stack.
+  UdaPeople backend stack.
 
 Parameters:
   ID:
@@ -7,28 +7,38 @@ Parameters:
     Type: String
 
 Resources:
-  WebsiteBucket:
-    Type: AWS::S3::Bucket
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      BucketName: !Sub "udacapstone-${ID}"
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: 404.html
-  
-  WebsiteBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref 'WebsiteBucket'
-      PolicyDocument:
-        Statement:
-        - Sid: PublicReadForGetBucketObjects
-          Effect: Allow
-          Principal: '*'
-          Action: s3:GetObject
-          Resource: !Join ['', ['arn:aws:s3:::', !Ref 'WebsiteBucket', /*]]
+      GroupName: !Sub UdaPeople-${ID}
+      GroupDescription: Allow port 22 and port 3000.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
 
-Outputs:
-  WebsiteURL:
-    Value: !GetAtt WebsiteBucket.WebsiteURL
-    Description: URL for website hosted on S3
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.medium
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
+      KeyName: udacity
+      BlockDeviceMappings: 
+      - DeviceName: "/dev/xvda"
+        Ebs: 
+          VolumeType: "gp2"
+          Iops: "100"
+          DeleteOnTermination: "true"
+          VolumeSize: "20"
+      - DeviceName: "/dev/sdk"
+        NoDevice: {}
+      ImageId: ami-0c4f7023847b90238 
+      Tags:
+        - Key: Name
+          Value: !Sub frontend-${ID}
