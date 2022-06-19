@@ -64,11 +64,10 @@ jobs:
           command: |
             node -v
             npm i
-            npm run build
-      - docker/hadolint:
-          dockerfiles: './Dockerfile'
-          ignore-rules: 'DL4005,DL3008'
-          trusted-registries: 'docker.io,my-company.com:5000'
+            npm run 
+      - docker/dockerlint:
+            dockerfile: './Dockerfile'
+            treat-warnings-as-errors: false
       - docker/build:
           image: udacity-capstone-image
           registry: 'yangnguyen1993'
