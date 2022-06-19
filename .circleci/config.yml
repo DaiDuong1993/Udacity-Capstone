@@ -45,6 +45,20 @@ jobs:
             npm i
             npm test
 
+  scan-dockerfile:
+    docker:
+      - image: cimg/python:3.10.4
+      - checkout
+      - run:
+          name: install hadolint
+          command: |
+            wget -O ./hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
+            chmod +x ./hadolint
+      - run:
+          name: lint Dockerfile
+          command: |
+            ./hadolint Dockerfile
+  
   build-docker-app:
     docker:
       - image: cimg/node:16.15.1
@@ -65,9 +79,6 @@ jobs:
             node -v
             npm i
             npm run 
-      - docker/dockerlint:
-            dockerfile: './Dockerfile'
-            treat-warnings-as-errors: false
       - docker/build:
           image: udacity-capstone-image
           registry: 'yangnguyen1993'
@@ -107,7 +118,8 @@ workflows:
       - build-frontend
       - test-frontend:
           requires: [build-frontend]
+      - scan-dockerfile
       - build-docker-app:
-          requires: [test-frontend]
+          requires: [scan-dockerfile]
       - deploy-infrastructure:
           requires: [build-docker-app]

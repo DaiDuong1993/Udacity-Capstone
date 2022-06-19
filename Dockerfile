@@ -2,10 +2,11 @@
 FROM node:lts AS development
 # Set working directory
 WORKDIR /app
+xxxx
 #
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
-RUN npm installww
+RUN npm install
 COPY . /app
 ENV CI=true
 ENV PORT=3000
