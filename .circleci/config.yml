@@ -65,9 +65,14 @@ jobs:
             node -v
             npm i
             npm run build
+      - docker/hadolint:
+          dockerfiles: './Dockerfile'
+          executor-class: medium
+          hadolint-tag: 2.2.0-debian
+          ignore-rules: 'DL4005,DL3008'
+          trusted-registries: 'docker.io,my-company.com:5000'
       - docker/build:
           image: udacity-capstone-image
-          lint-dockerfile: true
           registry: 'yangnguyen1993'
           tag: "${CIRCLE_WORKFLOW_ID:0:7}"
       - docker/push:
@@ -99,35 +104,6 @@ jobs:
               --tags project=udacity-project
       - destroy-environment
 
-  cleanup:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            yum install -y gcc-c++ make 
-            yum -y install tar gzip
-      - attach_workspace:
-          at: ~/ 
-      - run:
-          name: Get old stack workflow id and Remove old stacks and files
-          command: |
-            export OldWorkflowID=$(cat ~/OldWorkflowID.txt)
-            echo OldWorkflowID:"${OldWorkflowID}"
-            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-            echo THIS IS THE OldWorkflowID: "${OldWorkflowID}"
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
-            then
-              echo '----NOTHING CHANGE-----'
-            else
-              aws cloudformation delete-stack --stack-name udacapstone-frontend-${OldWorkflowID}
-              echo '----DELETED-----'
-            fi
-      # Here's where you will add some code to rollback on failure
-      - destroy-environment
-
 workflows:
   default:
     jobs:
@@ -138,5 +114,3 @@ workflows:
           requires: [test-frontend]
       - deploy-infrastructure:
           requires: [build-docker-app]
-      - cleanup:
-          requires: [deploy-infrastructure]
