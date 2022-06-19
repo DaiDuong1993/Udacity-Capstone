@@ -1,3 +1,11 @@
+[![DaiDuong1993](https://circleci.com/gh/DaiDuong1993/project-ml-microservice-kubernetes.svg?style=svg)](https://app.circleci.com/pipelines/github/DaiDuong1993/Udacity-Capstone?branch=master&filter=all)
+# Deploy React Demo App
+
+- Buid and test application
+- Build docker image and push to [Docker Hub](https://hub.docker.com/repository/docker/yangnguyen1993/udacity-capstone-image)
+- Manually pull docker image and deploy app to EC2 instance's kubenetes cluster
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
