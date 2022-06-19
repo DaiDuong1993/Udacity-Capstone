@@ -32,13 +32,13 @@ Resources:
       BlockDeviceMappings: 
       - DeviceName: "/dev/xvda"
         Ebs: 
-          VolumeType: "gp2"
+          VolumeType: "io1"
           Iops: "100"
           DeleteOnTermination: "true"
           VolumeSize: "30"
       - DeviceName: "/dev/sdk"
         NoDevice: {}
-      ImageId: ami-0ddf424f81ddb0720 
+      ImageId: ami-0ddf424f81ddb0720
       Tags:
         - Key: Name
           Value: !Sub frontend-${ID}
