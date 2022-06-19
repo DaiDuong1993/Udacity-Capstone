@@ -38,7 +38,7 @@ Resources:
           VolumeSize: "30"
       - DeviceName: "/dev/sdk"
         NoDevice: {}
-      ImageId: ami-0d70546e43a941d70
+      ImageId: ami-098e42ae54c764c35
       Tags:
         - Key: Name
           Value: !Sub frontend-${ID}
