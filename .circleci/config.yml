@@ -48,6 +48,7 @@ jobs:
   scan-dockerfile:
     docker:
       - image: cimg/python:3.10.4
+    steps:
       - checkout
       - run:
           name: install hadolint
@@ -118,7 +119,8 @@ workflows:
       - build-frontend
       - test-frontend:
           requires: [build-frontend]
-      - scan-dockerfile
+      - scan-dockerfile:
+          requires: [build-frontend]
       - build-docker-app:
           requires: [scan-dockerfile]
       - deploy-infrastructure:
