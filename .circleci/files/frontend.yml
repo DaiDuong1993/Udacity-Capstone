@@ -35,7 +35,7 @@ Resources:
           VolumeType: "gp2"
           Iops: "100"
           DeleteOnTermination: "true"
-          VolumeSize: "20"
+          VolumeSize: "30"
       - DeviceName: "/dev/sdk"
         NoDevice: {}
       ImageId: ami-0c4f7023847b90238 

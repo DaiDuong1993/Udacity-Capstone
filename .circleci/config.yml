@@ -1,15 +1,16 @@
 version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@1.3.0
-  aws-eks: circleci/aws-eks@2.2.0
-  kubernetes: circleci/kubernetes@1.3
   docker: circleci/docker@2.1.2
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
-      - aws-eks/delete-cluster:
-          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+       - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7}
             
 jobs:
   build-frontend:
@@ -77,56 +78,25 @@ jobs:
       - run:
           command: |
             echo "Digest is: $(</tmp/digest.txt)"
-
-  deploy-frontend:
+  
+  deploy-infrastructure:
     docker:
-      - image: 'cimg/python:3.10'
-    parameters:
-      cluster-name:
-        description: |
-          EKS React App Cluster
-        type: string
-    steps:
-      - kubernetes/install:
-          kubectl-version: v1.22.0
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-      - run:
-          name: Run cluster with docker image
-          command: |
-            kubectl get services
-            dockerpath=yangnguyen1993/udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}
-            echo "Docker ID and Image: $dockerpath"
-            kubectl run udacity-capstone-image --image=$dockerpath --port=3000
-            kubectl get pods
-            kubectl port-forward pods/udacity-capstone-image 3000:80
-      - destroy-environment
-
-  smoke-test:
-    docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl
-            pip install awscli
+            yum -y install tar
+            yum -y install gzip
       - run:
-          name: Frontend smoke test.
+          name: Ensure front-end infrastructure exist
           command: |
-            echo "------------------------------------"
-            echo http://udacapstone-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/
-            echo "------------------------------------"
-
-            if curl -s http://udacapstone-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/ | grep "Welcome"
-            then
-              echo "Frontend Smoke Test Success"
-              return 0
-            else
-              echo "Frontend Smoke Test Failed"
-              return 1
-            fi
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --stack-name udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7} \
+              --tags project=udacity-project
       - destroy-environment
 
   cleanup:
@@ -152,7 +122,6 @@ jobs:
             then
               echo '----NOTHING CHANGE-----'
             else
-              aws s3 rb s3://udacapstone-${OldWorkflowID} --force
               aws cloudformation delete-stack --stack-name udacapstone-frontend-${OldWorkflowID}
               echo '----DELETED-----'
             fi
@@ -167,18 +136,7 @@ workflows:
           requires: [build-frontend]
       - build-docker-app:
           requires: [test-frontend]
-      - aws-eks/create-cluster:
-          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+      - deploy-infrastructure:
           requires: [build-docker-app]
-      - deploy-frontend:
-          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
-          requires:
-            - aws-eks/create-cluster
-      # - deploy-frontend:
-      #     requires: [deploy-infrastructure]
-      # - smoke-test:
-      #     requires: [deploy-frontend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
