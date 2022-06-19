@@ -120,7 +120,7 @@ workflows:
       - test-frontend:
           requires: [build-frontend]
       - scan-dockerfile:
-          requires: [build-frontend]
+          requires: [test-frontend]
       - build-docker-app:
           requires: [scan-dockerfile]
       - deploy-infrastructure:
