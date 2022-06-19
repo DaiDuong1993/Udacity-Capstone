@@ -138,5 +138,5 @@ workflows:
           requires: [test-frontend]
       - deploy-infrastructure:
           requires: [build-docker-app]
-      - cleanup:
-          requires: [cloudfront-update]
+      # - cleanup:
+      #     requires: [deploy-infrastructure]
