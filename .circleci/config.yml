@@ -112,15 +112,15 @@ jobs:
           node-type: "m3.medium"
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
+      - kubernetes/create-or-update-resource:
+          get-rollout-status: true
+          resource-file-path: ".circleci/files/frontend.yml"
+          resource-name: "udacapstone-frontend"
       - run:
           name: check cluster status
           command: |
             kubectl get services
             kubectl get pods --all-namespaces 
-      - kubernetes/create-or-update-resource:
-          get-rollout-status: true
-          resource-file-path: ".circleci/files/frontend.yml"
-          resource-name: udacapstone-frontend
       - destroy-environment
 
   smoke-test:
@@ -181,7 +181,7 @@ workflows:
       - build-docker-app:
           requires: [scan-dockerfile]
       - deploy-frontend:
-          cluster-name: 'udacity-capstone'
+          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
           requires: [build-docker-app]
       # - deploy-frontend:
       #     requires: [deploy-infrastructure]
