@@ -59,21 +59,6 @@ jobs:
           name: lint Dockerfile
           command: |
             ./hadolint Dockerfile
-
-  scan-dockerfile:
-    docker:
-      - image: cimg/python:3.10.4
-    steps:
-      - checkout
-      - run:
-          name: install hadolint
-          command: |
-            wget -O ./hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
-            chmod +x ./hadolint
-      - run:
-          name: lint Dockerfile
-          command: |
-            ./hadolint Dockerfile
   
   build-docker-app:
     docker:
