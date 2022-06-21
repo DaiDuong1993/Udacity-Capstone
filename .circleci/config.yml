@@ -119,7 +119,7 @@ jobs:
             kubectl get pods --all-namespaces 
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
-          resource-file-path: ./circleci/files/frontend.yml
+          resource-file-path: ".circleci/files/frontend.yml"
           resource-name: udacapstone-frontend
       - destroy-environment
 
