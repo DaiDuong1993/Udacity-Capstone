@@ -1,44 +1,31 @@
-Description: >
-  UdaPeople backend stack.
-
-Parameters:
-  ID:
-    Description: Unique identifier.
-    Type: String
-
-Resources:
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Sub UdaPeople-${ID}
-      GroupDescription: Allow port 22 and port 3000.
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          CidrIp: 0.0.0.0/0
-
-  EC2Instance:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: t2.medium
-      SecurityGroups:
-        - Ref: InstanceSecurityGroup
-      KeyName: udacity
-      BlockDeviceMappings: 
-      - DeviceName: "/dev/xvda"
-        Ebs: 
-          VolumeType: "gp2"
-          Iops: "100"
-          DeleteOnTermination: "true"
-          VolumeSize: "20"
-      - DeviceName: "/dev/sdk"
-        NoDevice: {}
-      ImageId: ami-0c4f7023847b90238 
-      Tags:
-        - Key: Name
-          Value: !Sub frontend-${ID}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: udacapstone-frontend
+  name: udacapstone-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: udacapstone-frontend
+  template:
+    metadata:
+      labels:
+        service: udacapstone-frontend
+        api: external
+    spec:
+      containers:
+        - image: yangnguyen1993/udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}
+          name: udacity-capstone-image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always

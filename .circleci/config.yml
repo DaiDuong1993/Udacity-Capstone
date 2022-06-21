@@ -43,6 +43,21 @@ jobs:
           command: |
             npm i
             npm test
+  
+  scan-dockerfile:
+    docker:
+      - image: cimg/python:3.10.4
+    steps:
+      - checkout
+      - run:
+          name: install hadolint
+          command: |
+            wget -O ./hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
+            chmod +x ./hadolint
+      - run:
+          name: lint Dockerfile
+          command: |
+            ./hadolint Dockerfile
 
   build-docker-app:
     docker:
@@ -66,7 +81,6 @@ jobs:
             npm run build
       - docker/build:
           image: udacity-capstone-image
-          lint-dockerfile: true
           registry: 'yangnguyen1993'
           tag: "${CIRCLE_WORKFLOW_ID:0:7}"
       - docker/push:
@@ -87,19 +101,20 @@ jobs:
           EKS React App Cluster
         type: string
     steps:
+      - checkout
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
       - run:
-          name: Run cluster with docker image
+          name: check cluster status
           command: |
             kubectl get services
-            dockerpath=yangnguyen1993/udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}
-            echo "Docker ID and Image: $dockerpath"
-            kubectl run udacity-capstone-image --image=$dockerpath --port=3000
-            kubectl get pods
-            kubectl port-forward pods/udacity-capstone-image 3000:80
+            kubectl get pods --all-namespaces 
+      - kubernetes/create-or-update-resource:
+          get-rollout-status: true
+          resource-file-path: ./circleci/files/frontend.yml
+          resource-name: udacapstone-frontend
       - destroy-environment
 
   smoke-test:
@@ -165,10 +180,13 @@ workflows:
       - build-frontend
       - test-frontend:
           requires: [build-frontend]
-      - build-docker-app:
+      - scan-dockerfile:
           requires: [test-frontend]
+      - build-docker-app:
+          requires: [scan-dockerfile]
       - aws-eks/create-cluster:
           cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+          note-type:'m3.medium'
           requires: [build-docker-app]
       - deploy-frontend:
           cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
