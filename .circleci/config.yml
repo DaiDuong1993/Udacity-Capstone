@@ -190,7 +190,6 @@ workflows:
           requires: [test-frontend]
       - build-docker-app:
           requires: [scan-dockerfile]
-<<<<<<< HEAD
       - aws-eks/create-cluster:
           cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
           note-type:'m3.medium'
@@ -207,7 +206,3 @@ workflows:
       #     requires: [smoke-test]
       # - cleanup:
       #     requires: [cloudfront-update]
-=======
-      - deploy-infrastructure:
-          requires: [build-docker-app]
->>>>>>> 158f325a1779534c2f1d9a357ee9a60e5b78f78f
