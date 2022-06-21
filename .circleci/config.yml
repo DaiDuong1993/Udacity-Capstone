@@ -122,7 +122,6 @@ jobs:
             kubectl get services
             kubectl get pods --all-namespaces 
             kubectl apply -f .circleci/files/frontend.yml
-      - destroy-environment
 
   smoke-test:
     docker:
@@ -149,7 +148,6 @@ jobs:
               echo "Frontend Smoke Test Failed"
               return 1
             fi
-      - destroy-environment
 
   cleanup:
     docker:
@@ -182,7 +180,7 @@ workflows:
       - build-docker-app:
           requires: [scan-dockerfile]
       - deploy-frontend:
-          cluster-name: 'udacity-capstone-${CIRCLE_WORKFLOW_ID:0:7}'
+          cluster-name: 'udacapstone-frontend'
           requires: [build-docker-app]
       # - deploy-frontend:
       #     requires: [deploy-infrastructure]
