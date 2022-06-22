@@ -7,7 +7,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - name: "react app"
+    - name: "8181"
       port: 8181
       targetPort: 80
       protocol: TCP
