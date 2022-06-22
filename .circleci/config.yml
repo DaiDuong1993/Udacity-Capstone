@@ -126,5 +126,5 @@ workflows:
       - build-docker-app:
           requires: [scan-dockerfile]
       - deploy-frontend:
-          cluster-name: 'udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7}'
+          cluster-name: 'udacapstone-frontend'
           requires: [build-docker-app]
