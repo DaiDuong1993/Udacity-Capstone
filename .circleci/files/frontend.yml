@@ -16,7 +16,7 @@ spec:
         role: RollingUpdate
     spec:
       containers:
-        - image: yangnguyen1993/udacity-capstone-image:${CIRCLE_WORKFLOW_ID:0:7}
+        - image: yangnguyen1993/udacity-capstone-image:latest
           name: udacity-capstone-image
           imagePullPolicy: Always
           ports:

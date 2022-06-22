@@ -88,7 +88,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: 'cimg/python:3.10'
+      - image: 'aws-eks/python3'
     parameters:
       cluster-name:
         description: |
@@ -128,11 +128,3 @@ workflows:
       - deploy-frontend:
           cluster-name: 'udacapstone-frontend-${CIRCLE_WORKFLOW_ID:0:7}'
           requires: [build-docker-app]
-      # - deploy-frontend:
-      #     requires: [deploy-infrastructure]
-      # - smoke-test:
-      #     requires: [deploy-frontend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
