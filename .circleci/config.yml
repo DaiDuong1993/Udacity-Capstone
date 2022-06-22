@@ -117,14 +117,10 @@ jobs:
           command: |
             kubectl get services
             kubectl get pods --all-namespaces
-      - kubernetes/create-or-update-resource:
-          get-rollout-status: true
-          show-kubectl-command: true
-          resource-file-path: ".circleci/files/frontend.yml"
-          resource-name: "deployment/udacapstone-frontend"
       - run:
           name: run kubenetes services
           command: |
+            kubectl apply -f .circleci/files/frontend.yml
             kubectl apply -f .circleci/files/services.yml
 
   smoke-test:
