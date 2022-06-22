@@ -89,6 +89,9 @@ jobs:
   deploy-frontend:
     docker:
       - image: 'aws-eks/python3'
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKERHUB_PASSWORD
     parameters:
       cluster-name:
         description: |
