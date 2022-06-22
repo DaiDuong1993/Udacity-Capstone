@@ -112,16 +112,20 @@ jobs:
           node-type: "m3.medium"
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
-      - kubernetes/create-or-update-resource:
-          get-rollout-status: true
-          resource-file-path: ".circleci/files/frontend.yml"
-          resource-name: "deployment/udacapstone-frontend"
       - run:
           name: check cluster status
           command: |
             kubectl get services
-            kubectl get pods --all-namespaces 
-            # kubectl apply -f .circleci/files/frontend.yml
+            kubectl get pods --all-namespaces
+      - kubernetes/create-or-update-resource:
+          get-rollout-status: true
+          show-kubectl-command: true
+          resource-file-path: ".circleci/files/frontend.yml"
+          resource-name: "deployment/udacapstone-frontend"
+      - run:
+          name: run kubenetes services
+          command: |
+            kubectl apply -f .circleci/files/services.yml
 
   smoke-test:
     docker:
